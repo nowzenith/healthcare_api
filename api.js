@@ -1,18 +1,23 @@
-const server = require('./server');
+const express = require('express');
+const bodyParser = require('body-parser');
+const server = require('./server'); // Adjust the path as necessary
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.json());
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function assignRole(basecid, targetcid, role) {
-    //Assuming 0 = Doctor, 1 = Insurance, 2 = AdminD, 3 = AdminI
     try {
         var { web3, provider } = await server.web3init(basecid);
         await server.assignRole(web3, targetcid, role);
         await server.log_role(web3);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -21,9 +26,9 @@ async function removeAdminD(basecid, targetcid) {
         var { web3, provider } = await server.web3init(basecid);
         await server.removeAdminD(web3, targetcid);
         await server.log_role(web3);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -31,9 +36,9 @@ async function sendRequest(doctorcid, patientcid) {
     try {
         var { web3, provider } = await server.web3init(doctorcid);
         await server.requestAccess(web3, patientcid);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -41,9 +46,9 @@ async function getAccessRequests(cid) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.getAccessRequests(web3);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -51,9 +56,9 @@ async function grantAccess(cid, targetcid) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.grantAccess(web3, targetcid);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -61,9 +66,9 @@ async function revokeAccess(cid, targetcid) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.revokeAccess(web3, targetcid);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -72,9 +77,9 @@ async function addData(cid, targetcid, file, data) {
         var { web3, provider } = await server.web3init(cid);
         const ipfsCID = await server.addDataToIPFS(data);
         await server.addIPFSCID(web3, targetcid, ipfsCID, file);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -82,9 +87,9 @@ async function getData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.getIPFSCIDByPublicKey(web3, targetcid, file);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
@@ -92,14 +97,13 @@ async function getlastData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.getLastIPFSCIDByPublicKey(web3, targetcid, file);
-        return true
+        return true;
     } catch (error) {
-        return false
+        return false;
     }
 }
 
 async function base() {
-    //Assuming 0 = Doctor, 1 = Insurance, 2 = AdminD, 3 = AdminI
     await assignRole("1", "2", 2); //superadmin ให้ cid 2 เป็น adminหมอ
     await assignRole("1", "3", 3); //superadmin ให้ cid 3 เป็น adminประกัน
     await assignRole("2", "4", 0); //adminหมอ ให้ cid 4 เป็น หมอ
@@ -112,11 +116,10 @@ async function base() {
 }
 
 async function test1() {
-
+    // Test logic
 }
 
 async function test2() {
-    // หมอขอเข้าถึงข้อมูลคนไข้แล้วคนไข้ปฏิเสธ
     await getAccessRequests("0");
     await delay(2000);
     await sendRequest("4", "0");
@@ -129,40 +132,121 @@ async function test2() {
 }
 
 async function test3() {
-    // หมอขอเข้าถึงข้อมูลคนไข้แล้วคนไข้อนุญาติ และดูว่าคนไข้มีหมอคนไหนที่เคยขอสิทธิ์บ้าง
     await getAccessRequests("0");
-    // await delay(2000);
     await sendRequest("4", "0");
-    // await delay(2000);
     await getAccessRequests("0");
-    // await delay(2000);
     await grantAccess("0", "4");
-    // await delay(2000);
     await getAccessRequests("0");
 }
 
 async function test4() {
-    // หมอทำการส่งข้อมูลเข้าไปเก็บในsc และ เรียกดูข้อมูลด้วย หมอ-คนไข้ -> คนไข้ -> คนไข้อันล่าสุด
     const citizenData = { file: 3, doctor: "4", medicalData: { "name": "now", "surname": "zenith", age: 22, "data": [1, "2", 3] } };
-
     await getData("4", "0", 3);
-    // await delay(2000);
     await addData("4", "0", 3, citizenData);
-    // await delay(2000);
     await getData("4", "0", 3);
-    // await delay(2000);
     await getData("0", "0", 3);
-    // await delay(2000);
-    await getlastData("0", "0", 3)
+    await getlastData("0", "0", 3);
 }
 
+app.post('/assignRole', async (req, res) => {
+    const { basecid, targetcid, role } = req.body;
+    const success = await assignRole(basecid, targetcid, role);
+    res.status(success ? 200 : 500).send({ success });
+});
 
+app.post('/removeAdminD', async (req, res) => {
+    const { basecid, targetcid } = req.body;
+    const success = await removeAdminD(basecid, targetcid);
+    res.status(success ? 200 : 500).send({ success });
+});
 
-async function main() {
-    // await base();
-    // await test1();
-    // await test2();
-    // await test3();
-}
+app.post('/sendRequest', async (req, res) => {
+    const { doctorcid, patientcid } = req.body;
+    const success = await sendRequest(doctorcid, patientcid);
+    res.status(success ? 200 : 500).send({ success });
+});
 
-main()
+app.post('/getAccessRequests', async (req, res) => {
+    const { cid } = req.body;
+    const success = await getAccessRequests(cid);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/grantAccess', async (req, res) => {
+    const { cid, targetcid } = req.body;
+    const success = await grantAccess(cid, targetcid);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/revokeAccess', async (req, res) => {
+    const { cid, targetcid } = req.body;
+    const success = await revokeAccess(cid, targetcid);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/addData', async (req, res) => {
+    const { cid, targetcid, file, data } = req.body;
+    const success = await addData(cid, targetcid, file, data);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/getData', async (req, res) => {
+    const { cid, targetcid, file } = req.body;
+    const success = await getData(cid, targetcid, file);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/getlastData', async (req, res) => {
+    const { cid, targetcid, file } = req.body;
+    const success = await getlastData(cid, targetcid, file);
+    res.status(success ? 200 : 500).send({ success });
+});
+
+app.post('/base', async (req, res) => {
+    try {
+        await base();
+        res.status(200).send({ success: true });
+    } catch (error) {
+        res.status(500).send({ success: false });
+    }
+});
+
+app.post('/test1', async (req, res) => {
+    try {
+        await test1();
+        res.status(200).send({ success: true });
+    } catch (error) {
+        res.status(500).send({ success: false });
+    }
+});
+
+app.post('/test2', async (req, res) => {
+    try {
+        await test2();
+        res.status(200).send({ success: true });
+    } catch (error) {
+        res.status(500).send({ success: false });
+    }
+});
+
+app.post('/test3', async (req, res) => {
+    try {
+        await test3();
+        res.status(200).send({ success: true });
+    } catch (error) {
+        res.status(500).send({ success: false });
+    }
+});
+
+app.post('/test4', async (req, res) => {
+    try {
+        await test4();
+        res.status(200).send({ success: true });
+    } catch (error) {
+        res.status(500).send({ success: false });
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}/`);
+});
