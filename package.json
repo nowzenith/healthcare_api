@@ -19,6 +19,7 @@
     "ganache": "^7.9.2",
     "ipfs-http-client": "^60.0.1",
     "kubo-rpc-client": "^4.1.1",
+    "mysql": "^2.18.1",
     "path": "^0.12.7",
     "truffle-hdwallet-provider": "^1.0.17",
     "web3": "^4.10.0"

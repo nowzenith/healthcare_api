@@ -4,6 +4,14 @@ const server = require('./server'); // Adjust the path as necessary
 const app = express();
 const port = 3000;
 
+var mysql = require('mysql');
+
+var con = mysql.createConnection({
+    host: "103.245.164.68",
+    user: "now",
+    password: "12345678"
+});
+
 app.use(bodyParser.json());
 
 function delay(ms) {
@@ -77,6 +85,15 @@ async function addData(cid, targetcid, file, data) {
         var { web3, provider } = await server.web3init(cid);
         const ipfsCID = await server.addDataToIPFS(data);
         await server.addIPFSCID(web3, targetcid, ipfsCID, file);
+        con.connect(function (err) {
+            if (err) throw err;
+            console.log("Connected!");
+            var sql = `INSERT INTO customers (file, cid, ipfscid) VALUES ('${file}', '${targetcid}', '${ipfsCID}')`;
+            con.query(sql, function (err, result) {
+                if (err) throw err;
+                console.log("1 record inserted");
+            });
+        });
         return true;
     } catch (error) {
         return false;
@@ -97,6 +114,56 @@ async function getlastData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
         await server.getLastIPFSCIDByPublicKey(web3, targetcid, file);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function getAccessRequests(cid) {
+    try {
+        var { web3, provider } = await server.web3init(cid);
+        await server.getAccessRequests(web3);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function requestWriteAccess(doctorcid, patientcid) {
+    try {
+        var { web3, provider } = await server.web3init(doctorcid);
+        await server.requestWriteAccess(web3, patientcid);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function grantWriteAccess(patientcid, doctorcid) {
+    try {
+        var { web3, provider } = await server.web3init(patientcid);
+        await server.grantWriteAccess(web3, doctorcid);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function revokeWriteAccess(patientcid, doctorcid) {
+    try {
+        var { web3, provider } = await server.web3init(patientcid);
+        await server.revokeWriteAccess(web3, doctorcid);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function approveTempIPFSCID(cid, targetcid, file) {
+    try {
+        var { web3, provider } = await server.web3init(cid);
+        await server.approveTempIPFSCID(web3, targetcid, file);
         return true;
     } catch (error) {
         return false;
@@ -200,51 +267,6 @@ app.post('/getlastData', async (req, res) => {
     const { cid, targetcid, file } = req.body;
     const success = await getlastData(cid, targetcid, file);
     res.status(success ? 200 : 500).send({ success });
-});
-
-app.post('/base', async (req, res) => {
-    try {
-        await base();
-        res.status(200).send({ success: true });
-    } catch (error) {
-        res.status(500).send({ success: false });
-    }
-});
-
-app.post('/test1', async (req, res) => {
-    try {
-        await test1();
-        res.status(200).send({ success: true });
-    } catch (error) {
-        res.status(500).send({ success: false });
-    }
-});
-
-app.post('/test2', async (req, res) => {
-    try {
-        await test2();
-        res.status(200).send({ success: true });
-    } catch (error) {
-        res.status(500).send({ success: false });
-    }
-});
-
-app.post('/test3', async (req, res) => {
-    try {
-        await test3();
-        res.status(200).send({ success: true });
-    } catch (error) {
-        res.status(500).send({ success: false });
-    }
-});
-
-app.post('/test4', async (req, res) => {
-    try {
-        await test4();
-        res.status(200).send({ success: true });
-    } catch (error) {
-        res.status(500).send({ success: false });
-    }
 });
 
 app.listen(port, () => {

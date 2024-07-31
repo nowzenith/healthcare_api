@@ -28,8 +28,19 @@ contract RoleBasedAccessControl {
     address public superAdmin;
 
     struct AccessRequest {
-    address doctor;
-    bool approved;
+        address doctor;
+        bool approved;
+    }
+
+    struct AccessWriteRequest {
+        address doctor;
+        bool approved;
+    }
+
+    struct TempIPFSCID {
+        address publicKey;
+        uint8 slot;
+        string ipfsCID;
     }
 
     // Mapping from CID to public key
@@ -44,12 +55,17 @@ contract RoleBasedAccessControl {
     mapping(address => string[]) public patientDataHistory; // Mapping from user address to array of data CIDs
 
     mapping(address => AccessRequest[]) public accessRequests;
+    mapping(address => AccessWriteRequest[]) public accessWriteRequests;
+
+    mapping(address => TempIPFSCID[]) public temporaryIPFSCIDs;
 
     event AccessRequested(address patient, address doctor);
     event AccessGranted(address patient, address doctor);
     event AccessRevoked(address patient, address doctor);
 
-
+    event WriteAccessRequested(address patient, address doctor);
+    event WriteAccessGranted(address patient, address doctor);
+    event WriteAccessRevoked(address patient, address doctor);
 
     // Function to map a CID to a public key
     function keepcid(string memory cid, address publicKey) public {
@@ -215,9 +231,27 @@ contract RoleBasedAccessControl {
     }
 
     function keepIPFSCID(address publicKey, uint8 slot, string memory ipfsCID) public onlyRole(Role.Doctor) {
-        require(hasAccessRead(publicKey, msg.sender), "Unauthorized: sender does not have a permission");
+        require(hasAccessWrite(publicKey, msg.sender), "Unauthorized: sender does not have a permission");
         publicKeyToIPFSCIDs[publicKey][slot].push(ipfsCID);
         emit IPFSCIDMapped(publicKey, slot, ipfsCID);
+    }
+
+    function requestKeepIPFSCID(address publicKey, uint8 slot, string memory ipfsCID) public onlyRole(Role.Doctor) {
+        require(hasAccessWrite(publicKey, msg.sender), "Unauthorized: sender does not have a permission");
+        temporaryIPFSCIDs[msg.sender].push(TempIPFSCID({
+            publicKey: publicKey,
+            slot: slot,
+            ipfsCID: ipfsCID
+        }));
+    }
+
+    function approveTempIPFSCID(address doctor, uint index) public {
+        TempIPFSCID memory tempCID = temporaryIPFSCIDs[doctor][index];
+        require(hasAccessWrite(tempCID.publicKey, doctor), "Unauthorized: sender does not have a permission");
+        publicKeyToIPFSCIDs[tempCID.publicKey][tempCID.slot].push(tempCID.ipfsCID);
+        temporaryIPFSCIDs[doctor][index] = temporaryIPFSCIDs[doctor][temporaryIPFSCIDs[doctor].length - 1];
+        temporaryIPFSCIDs[doctor].pop();
+        emit IPFSCIDMapped(tempCID.publicKey, tempCID.slot, tempCID.ipfsCID);
     }
 
     function getIPFSCIDsByPublicKeyAndSlot(address publicKey, uint8 slot) public view returns (string[] memory) {
@@ -278,8 +312,57 @@ contract RoleBasedAccessControl {
         return false;
     }
 
+    function hasAccessWrite(address patient, address doctor) public view returns (bool) {
+        AccessWriteRequest[] storage requests = accessWriteRequests[patient];
+        for (uint i = 0; i < requests.length; i++) {
+            if (requests[i].doctor == doctor && requests[i].approved) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function requestWriteAccess(address patient) public onlyRole(Role.Doctor) {
+        require(patient != msg.sender, "Cannot request access to yourself");
+
+        accessWriteRequests[patient].push(AccessWriteRequest({
+            doctor: msg.sender,
+            approved: false
+        }));
+
+        emit WriteAccessRequested(patient, msg.sender);
+    }
+
+    function grantWriteAccess(address doctor) public {
+        AccessWriteRequest[] storage requests = accessWriteRequests[msg.sender];
+        for (uint i = 0; i < requests.length; i++) {
+            if (requests[i].doctor == doctor && !requests[i].approved) {
+                requests[i].approved = true;
+                emit WriteAccessGranted(msg.sender, doctor);
+                return;
+            }
+        }
+        revert("No write access request found for the specified doctor");
+    }
+
+    function revokeWriteAccess(address doctor) public {
+        AccessWriteRequest[] storage requests = accessWriteRequests[msg.sender];
+        for (uint i = 0; i < requests.length; i++) {
+            if (requests[i].doctor == doctor) {
+                requests[i] = requests[requests.length - 1];
+                requests.pop();
+                emit WriteAccessRevoked(msg.sender, doctor);
+                return;
+            }
+        }
+        revert("No write access request found for the specified doctor");
+    }
+
     function getAccessRequests() public view returns (AccessRequest[] memory) {
         return accessRequests[msg.sender];
     }
 
+    function getWriteAccessRequests() public view returns (AccessWriteRequest[] memory) {
+        return accessWriteRequests[msg.sender];
+    }
 }

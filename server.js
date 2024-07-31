@@ -5,15 +5,12 @@ const path = require('path');
 const ethers = require('ethers');
 const crypto = require('crypto');
 
-const global_contract = "0x2Bf8AD79601c259129F6c6fC743d7cBfc2d9CAa2";
+const global_contract = "0x190302F594475581140523Ce12c4831d1018703B";
 
 function generateKeyPairFromID(citizenID) {
     const hash = crypto.createHash('sha256').update(citizenID).digest('hex');
     let privateKey = '0x' + hash;
     const wallet = new ethers.Wallet(privateKey);
-    // console.log('Derived Ethereum Address:', wallet.address);
-    // console.log('Private Key:', wallet.privateKey);
-    // console.log('Public Key:', wallet.signingKey);
     return wallet;
 }
 
@@ -40,7 +37,7 @@ async function addCID(web3, cid) {
 
     try {
         const receipt = await contract.methods.keepcid(cid, account).send({ from: account });
-        // console.log('Transaction receipt:', receipt);
+        console.log('Transaction receipt:', receipt);
     } catch (error) {
         console.error('Error calling keepCID:', error);
         if (error.error.code == -32003) {
@@ -55,7 +52,7 @@ async function addCID(web3, cid) {
     }
 }
 async function sendETH(web3) {
-    const senderAccount = web3.eth.accounts.privateKeyToAccount('0x669719d1c62594eb6ac7275c65e6330410170f02e98bac95a357c922840b2a03');
+    const senderAccount = web3.eth.accounts.privateKeyToAccount('0xeef1193fd29d8d6a031aba5422001aa84e63fec6132dfe37a61d15bbb3c0ba1c');
     web3.eth.accounts.wallet.add(senderAccount);  // Add the sender's account to your wallet
 
     // Fetch the list of accounts and securely pick the first one as the recipient
@@ -72,12 +69,11 @@ async function sendETH(web3) {
 
     try {
         const receipt = await web3.eth.sendTransaction(tx);
-        // console.log('Transaction successful:', receipt);
+        console.log('Transaction successful:', receipt);
     } catch (error) {
         console.error('Transaction failed:', error);
     }
 }
-
 
 async function callPerformActionAsSuperAdmin(web3) {
     const contractPath = path.resolve(__dirname, 'build', 'contracts', 'RoleBasedAccessControl.json'); // Adjust path and contract name as necessary
@@ -137,7 +133,6 @@ async function log_role(web3) {
         console.log('Doctor CIDs:', result2);
         console.log('Insurance CIDs:', result3);
     } catch (error) {
-        // console.error('Error performing action as superadmin');
         console.error(error);
     }
 }
@@ -168,7 +163,6 @@ async function assignRole(web3, cid, role) {
         if (error.error.code == -32003) {
             try {
                 await sendETH(web3); // Sending ETH to cover potential gas shortages
-                // Retry assigning the role
                 const accounts = await web3.eth.getAccounts();
                 const recipientAccount = await web3_2.eth.getAccounts();
                 const retryTx = {
@@ -201,7 +195,6 @@ async function removeAdminD(web3, cid) {
         const superAdminAccount = accounts[0];  // Assuming the SuperAdmin is using the first account
         const Admin = recieve[0];
 
-        // Send transaction to remove an admin
         const tx = {
             from: superAdminAccount,
             gas: await contract.methods.removeAdminD(Admin).estimateGas({ from: superAdminAccount }),
@@ -216,19 +209,14 @@ async function removeAdminD(web3, cid) {
 }
 
 async function readDataFromIPFS(cid) {
-    // Dynamically import the ES Module
     const { create } = await import('kubo-rpc-client');
-
-    // Use the imported ES module
     const client = create(new URL('http://103.245.164.62/'));
 
     try {
-        // The `cat` method returns an async iterable; we need to concatenate the results to form the complete data.
         const chunks = [];
         for await (const chunk of client.cat(cid)) {
             chunks.push(chunk);
         }
-        // Convert the chunks from Uint8Array to a string
         const data = Buffer.concat(chunks).toString();
         console.log('Read data from IPFS:', data);
         return data;
@@ -238,10 +226,7 @@ async function readDataFromIPFS(cid) {
 }
 
 async function addDataToIPFS(jsonData) {
-    // Dynamically import the ES Module
     const { create } = await import('kubo-rpc-client');
-
-    // Use the imported ES module
     const client = create(new URL('http://103.245.164.62/'));
     try {
         const buffer = Buffer.from(JSON.stringify(jsonData));
@@ -261,7 +246,7 @@ async function addIPFSCID(web3, cid, ipfsCID, slot) {
 
     const contract = new web3.eth.Contract(abi, contractAddress);
 
-    const { web3: web3_2, provider } = await web3init(cid);  // Correctly destructure 'web3' as 'web3_2'
+    const { web3: web3_2, provider } = await web3init(cid);
 
     try {
         const accounts = await web3.eth.getAccounts();
@@ -282,14 +267,12 @@ async function getIPFSCIDByPublicKey(web3, cid, slot) {
     const abi = contractJson.abi;
     const contractAddress = global_contract;
 
-    // Create a contract instance
     const contract = new web3.eth.Contract(abi, contractAddress);
     const { web3: web3_2, provider } = await web3init(cid);
 
     try {
         const accounts1 = await web3.eth.getAccounts();
         const accounts2 = await web3_2.eth.getAccounts();
-        // Call the getIPFSCIDByPublicKey function
         const ipfsCID = await contract.methods.getIPFSCIDsByPublicKeyAndSlot(accounts2[0], slot).call({ from: accounts1[0] });
         console.log('IPFS CID for public key', accounts2[0], 'is', ipfsCID);
         return ipfsCID;
@@ -304,15 +287,12 @@ async function getLastIPFSCIDByPublicKey(web3, cid, slot) {
     const abi = contractJson.abi;
     const contractAddress = global_contract;
 
-    // Create a contract instance
     const contract = new web3.eth.Contract(abi, contractAddress);
     const { web3: web3_2, provider } = await web3init(cid);
-    
 
     try {
         const accounts1 = await web3.eth.getAccounts();
         const accounts2 = await web3_2.eth.getAccounts();
-        // Call the getIPFSCIDByPublicKey function
         const ipfsCID = await contract.methods.getLastIPFSCIDsByPublicKeyAndSlot(accounts2[0], slot).call({ from: accounts1[0] });
         console.log('IPFS CID for public key', accounts2[0], 'is', "http://103.245.164.62/ipfs/" + ipfsCID);
         return ipfsCID;
@@ -403,6 +383,90 @@ async function getAccessRequests(web3) {
     }
 }
 
+async function requestWriteAccess(web3, patientcid) {
+    const contractPath = path.resolve(__dirname, 'build', 'contracts', 'RoleBasedAccessControl.json');
+    const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+    const abi = contractJson.abi;
+    const contractAddress = global_contract;
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+    const accounts = await web3.eth.getAccounts();
+    const { web3: web3_2, provider } = await web3init(patientcid);
+    const accounts2 = await web3_2.eth.getAccounts();
+    const doctor = accounts[0];
+    const patient = accounts2[0];
+
+    try {
+        const receipt = await contract.methods.requestWriteAccess(patient).send({ from: doctor });
+        console.log('Write access request sent:', receipt);
+    } catch (error) {
+        console.error('Error requesting write access:', error);
+    }
+}
+
+async function grantWriteAccess(web3, doctorcid) {
+    const contractPath = path.resolve(__dirname, 'build', 'contracts', 'RoleBasedAccessControl.json');
+    const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+    const abi = contractJson.abi;
+    const contractAddress = global_contract;
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+    const accounts = await web3.eth.getAccounts();
+    const { web3: web3_2, provider } = await web3init(doctorcid);
+    const accounts2 = await web3_2.eth.getAccounts();
+    const patient = accounts[0];
+    const doctor = accounts2[0];
+
+    try {
+        const receipt = await contract.methods.grantWriteAccess(doctor).send({ from: patient });
+        console.log('Write access granted:', receipt);
+    } catch (error) {
+        console.error('Error granting write access:', error);
+    }
+}
+
+async function revokeWriteAccess(web3, doctorcid) {
+    const contractPath = path.resolve(__dirname, 'build', 'contracts', 'RoleBasedAccessControl.json');
+    const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+    const abi = contractJson.abi;
+    const contractAddress = global_contract;
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+    const accounts = await web3.eth.getAccounts();
+    const { web3: web3_2, provider } = await web3init(doctorcid);
+    const accounts2 = await web3_2.eth.getAccounts();
+    const patient = accounts[0];
+    const doctor = accounts2[0];
+
+    try {
+        const receipt = await contract.methods.revokeWriteAccess(doctor).send({ from: patient });
+        console.log('Write access revoked:', receipt);
+    } catch (error) {
+        console.error('Error revoking write access:', error);
+    }
+}
+
+async function approveTempIPFSCID(web3, doctorcid, index) {
+    const contractPath = path.resolve(__dirname, 'build', 'contracts', 'RoleBasedAccessControl.json');
+    const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+    const abi = contractJson.abi;
+    const contractAddress = global_contract;
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+    const accounts = await web3.eth.getAccounts();
+    const { web3: web3_2, provider } = await web3init(doctorcid);
+    const accounts2 = await web3_2.eth.getAccounts();
+    const patient = accounts[0];
+    const doctor = accounts2[0];
+
+    try {
+        const receipt = await contract.methods.approveTempIPFSCID(doctor, index).send({ from: patient });
+        console.log('Temporary IPFS CID approved:', receipt);
+    } catch (error) {
+        console.error('Error approving temporary IPFS CID:', error);
+    }
+}
+
 async function test() {
     var { web3, provider } = await web3init("1");
     var role = 2;
@@ -421,26 +485,7 @@ async function main() {
         const { web3, provider } = await web3init("3");  // Await the promise to resolve and destructure the result
         const citizenData = { name: "John Doe 2", age: 30, medicalHistory: ["Allergy to peanuts"] };
 
-        // await callPerformActionAsSuperAdmin(web3);
-
-        // const role = 0;  // Assuming 0 = Doctor, 1 = Insurance, 2 = AdminD, 3 = AdminI based on your enum
-        // await assignRole(web3, "3", role);
-        // await removeAdminD(web3,"3");
-        // await log_role(web3);
-
-        // addDataToIPFS({"hello":"hi"}).then((v) => readDataFromIPFS(v));
-
-        // const ipfsCID = await addDataToIPFS(citizenData);
-        // await addIPFSCID(web3, "4", ipfsCID, 2);
-
-        // await getIPFSCIDByPublicKey(web3,"4",2);
-
-        // await requestAccess(web3,"4");
-        // await grantAccess(web3,"3");
-        // await revokeAccess(web3,"3");
         await getAccessRequests(web3);
-        // await test();
-
         provider.engine.stop();  // Properly access provider to stop the engine
     } catch (error) {
         console.error('Error interacting with contract:', error);
@@ -469,6 +514,10 @@ module.exports = {
     grantAccess,
     revokeAccess,
     getAccessRequests,
+    requestWriteAccess,
+    grantWriteAccess,
+    revokeWriteAccess,
+    approveTempIPFSCID,
     test,
     main
 };
