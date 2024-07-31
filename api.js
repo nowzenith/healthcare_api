@@ -9,7 +9,8 @@ var mysql = require('mysql');
 var con = mysql.createConnection({
     host: "103.245.164.68",
     user: "now",
-    password: "12345678"
+    password: "12345678",
+    database: "hid"
 });
 
 app.use(bodyParser.json());
@@ -88,7 +89,7 @@ async function addData(cid, targetcid, file, data) {
         con.connect(function (err) {
             if (err) throw err;
             console.log("Connected!");
-            var sql = `INSERT INTO customers (file, cid, ipfscid) VALUES ('${file}', '${targetcid}', '${ipfsCID}')`;
+            var sql = `INSERT INTO test (file, cid, ipfscid) VALUES ('${file}', '${targetcid}', '${ipfsCID}')`;
             con.query(sql, function (err, result) {
                 if (err) throw err;
                 console.log("1 record inserted");
@@ -99,7 +100,6 @@ async function addData(cid, targetcid, file, data) {
         return false;
     }
 }
-
 async function getData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
