@@ -223,7 +223,7 @@ async function test4() {
     await getlastData("0", "0", 3);
 }
 
-app.get('/assignRole', async (req, res) => {
+app.get('/base', async (req, res) => {
     const success = await base();
     res.status(success ? 200 : 500).send({ success });
 });
@@ -278,6 +278,7 @@ app.get('/getData', async (req, res) => {
 
 app.get('/getlastData', async (req, res) => {
     const { cid, targetcid, file } = req.body;
+    console.log(cid,targetcid,file);
     const success = await getlastData(cid, targetcid, file);
     res.status(success ? 200 : 500).send({ success });
 });

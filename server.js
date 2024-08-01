@@ -5,7 +5,7 @@ const path = require('path');
 const ethers = require('ethers');
 const crypto = require('crypto');
 
-const global_contract = "0x190302F594475581140523Ce12c4831d1018703B";
+const global_contract = "0x616dF7462fDcED0C86AD6f69eC3eFae949e47292";
 
 function generateKeyPairFromID(citizenID) {
     const hash = crypto.createHash('sha256').update(citizenID).digest('hex');
@@ -52,7 +52,7 @@ async function addCID(web3, cid) {
     }
 }
 async function sendETH(web3) {
-    const senderAccount = web3.eth.accounts.privateKeyToAccount('0xeef1193fd29d8d6a031aba5422001aa84e63fec6132dfe37a61d15bbb3c0ba1c');
+    const senderAccount = web3.eth.accounts.privateKeyToAccount('0x50ded8d5c1a9a76cc28208ceb50cf3f32bf3048d764504dfff65b07e2f8e319b');
     web3.eth.accounts.wallet.add(senderAccount);  // Add the sender's account to your wallet
 
     // Fetch the list of accounts and securely pick the first one as the recipient
