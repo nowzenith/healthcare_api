@@ -215,59 +215,63 @@ async function test4() {
     await getlastData("0", "0", 3);
 }
 
-app.post('/assignRole', async (req, res) => {
+app.get('/assignRole', async (req, res) => {
     const { basecid, targetcid, role } = req.body;
     const success = await assignRole(basecid, targetcid, role);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/removeAdminD', async (req, res) => {
+app.get('/removeAdminD', async (req, res) => {
     const { basecid, targetcid } = req.body;
     const success = await removeAdminD(basecid, targetcid);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/sendRequest', async (req, res) => {
+app.get('/sendRequest', async (req, res) => {
     const { doctorcid, patientcid } = req.body;
     const success = await sendRequest(doctorcid, patientcid);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/getAccessRequests', async (req, res) => {
+app.get('/getAccessRequests', async (req, res) => {
     const { cid } = req.body;
     const success = await getAccessRequests(cid);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/grantAccess', async (req, res) => {
+app.get('/grantAccess', async (req, res) => {
     const { cid, targetcid } = req.body;
     const success = await grantAccess(cid, targetcid);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/revokeAccess', async (req, res) => {
+app.get('/revokeAccess', async (req, res) => {
     const { cid, targetcid } = req.body;
     const success = await revokeAccess(cid, targetcid);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/addData', async (req, res) => {
+app.get('/addData', async (req, res) => {
     const { cid, targetcid, file, data } = req.body;
     const success = await addData(cid, targetcid, file, data);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/getData', async (req, res) => {
+app.get('/getData', async (req, res) => {
     const { cid, targetcid, file } = req.body;
     const success = await getData(cid, targetcid, file);
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.post('/getlastData', async (req, res) => {
+app.get('/getlastData', async (req, res) => {
     const { cid, targetcid, file } = req.body;
     const success = await getlastData(cid, targetcid, file);
     res.status(success ? 200 : 500).send({ success });
 });
+
+app.get("/", (req, res) => {
+    res.send("Hello! Node.js");
+  });
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
