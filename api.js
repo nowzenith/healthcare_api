@@ -180,6 +180,7 @@ async function base() {
     // 3 -> admin ประกัน
     // 4 -> หมอ
     // 5 -> ประกัน
+    return true;
 }
 
 async function test1() {
@@ -214,6 +215,11 @@ async function test4() {
     await getData("0", "0", 3);
     await getlastData("0", "0", 3);
 }
+
+app.get('/assignRole', async (req, res) => {
+    const success = await base();
+    res.status(success ? 200 : 500).send({ success });
+});
 
 app.get('/assignRole', async (req, res) => {
     const { basecid, targetcid, role } = req.body;
@@ -260,7 +266,7 @@ app.get('/addData', async (req, res) => {
 app.get('/getData', async (req, res) => {
     const { cid, targetcid, file } = req.body;
     const success = await getData(cid, targetcid, file);
-    res.status(success ? 200 : 500).send({ success });
+    res.send(success);
 });
 
 app.get('/getlastData', async (req, res) => {
