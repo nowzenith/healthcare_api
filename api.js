@@ -26,6 +26,7 @@ async function assignRole(basecid, targetcid, role) {
         await server.log_role(web3);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -37,6 +38,7 @@ async function removeAdminD(basecid, targetcid) {
         await server.log_role(web3);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -47,6 +49,7 @@ async function sendRequest(doctorcid, patientcid) {
         await server.requestAccess(web3, patientcid);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -57,6 +60,7 @@ async function getAccessRequests(cid) {
         await server.getAccessRequests(web3);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -67,6 +71,7 @@ async function grantAccess(cid, targetcid) {
         await server.grantAccess(web3, targetcid);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -77,6 +82,7 @@ async function revokeAccess(cid, targetcid) {
         await server.revokeAccess(web3, targetcid);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -97,15 +103,16 @@ async function addData(cid, targetcid, file, data) {
         });
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
 async function getData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
-        await server.getIPFSCIDByPublicKey(web3, targetcid, file);
-        return true;
+        return await server.getIPFSCIDByPublicKey(web3, targetcid, file);
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -113,9 +120,9 @@ async function getData(cid, targetcid, file) {
 async function getlastData(cid, targetcid, file) {
     try {
         var { web3, provider } = await server.web3init(cid);
-        await server.getLastIPFSCIDByPublicKey(web3, targetcid, file);
-        return true;
+        return await server.getLastIPFSCIDByPublicKey(web3, targetcid, file);
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
@@ -123,9 +130,9 @@ async function getlastData(cid, targetcid, file) {
 async function getAccessRequests(cid) {
     try {
         var { web3, provider } = await server.web3init(cid);
-        await server.getAccessRequests(web3);
-        return true;
+        return await server.getAccessRequests(web3);
     } catch (error) {
+        console.log(error);
         return false;
     }
 }
