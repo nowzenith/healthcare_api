@@ -282,10 +282,6 @@ app.get('/getlastData', async (req, res) => {
     res.status(success ? 200 : 500).send({ success });
 });
 
-app.get("/", (req, res) => {
-    res.send("Hello! Node.js");
-  });
-
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
